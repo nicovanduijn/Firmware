@@ -215,6 +215,7 @@ Mission::on_active()
 
 		if (_mission_item.autocontinue) {
 			/* switch to next waypoint if 'autocontinue' flag set */
+			printf("reached mission.cpp#218\n");
 			advance_mission();
 			set_mission_items();
 		}
@@ -232,6 +233,7 @@ Mission::on_active()
 
 	/* check if a cruise speed change has been commanded */
 	if (_mission_type != MISSION_TYPE_NONE) {
+
 		cruising_speed_sp_update();
 	}
 
@@ -253,6 +255,7 @@ Mission::on_active()
 	}
 
 	if (_work_item_type == WORK_ITEM_TYPE_PRECISION_LAND) {
+
 		// switch out of precision land once landed
 		if (_navigator->get_land_detected()->landed) {
 			_navigator->get_precland()->on_inactivation();
@@ -500,16 +503,20 @@ Mission::update_offboard_mission()
 void
 Mission::advance_mission()
 {
+	printf("inside advance_mission work item type is: %d\n", _work_item_type);
 	/* do not advance mission item if we're processing sub mission work items */
 	if (_work_item_type != WORK_ITEM_TYPE_DEFAULT) {
 		return;
 	}
 
 	switch (_mission_type) {
+	printf("switch by mission type: %d\n", _mission_type);
 	case MISSION_TYPE_OFFBOARD:
+		printf("mission_type_offboard\n");
 		switch (_mission_execution_mode) {
 		case mission_result_s::MISSION_EXECUTION_MODE_NORMAL:
 		case mission_result_s::MISSION_EXECUTION_MODE_FAST_FORWARD: {
+				printf("mission_execution_mode normal or fast-forward\n");
 				_current_offboard_mission_index++;
 				break;
 			}
@@ -565,8 +572,9 @@ Mission::set_mission_items()
 	bool has_next_position_item = false;
 
 	work_item_type new_work_item_type = WORK_ITEM_TYPE_DEFAULT;
-
+printf("inside set_mission_items. _mission_type is %d\n", _mission_type);
 	if (prepare_mission_items(&_mission_item, &mission_item_next_position, &has_next_position_item)) {
+		printf("set_mission_items/prepare_mission_items\n");
 		/* if mission type changed, notify */
 		if (_mission_type != MISSION_TYPE_OFFBOARD) {
 			mavlink_log_info(_navigator->get_mavlink_log_pub(),
@@ -649,18 +657,21 @@ Mission::set_mission_items()
 		switch (_mission_execution_mode) {
 		case mission_result_s::MISSION_EXECUTION_MODE_NORMAL:
 		case mission_result_s::MISSION_EXECUTION_MODE_FAST_FORWARD: {
+printf("L658\n");
 				/* force vtol land */
 				if (_navigator->force_vtol() && _mission_item.nav_cmd == NAV_CMD_LAND) {
 					_mission_item.nav_cmd = NAV_CMD_VTOL_LAND;
+					printf("L662\n");
 				}
 
 				position_setpoint_triplet_s *pos_sp_triplet = _navigator->get_position_setpoint_triplet();
-
+printf("L666\n");
 				/* do takeoff before going to setpoint if needed and not already in takeoff */
 				/* in fixed-wing this whole block will be ignored and a takeoff item is always propagated */
 				if (do_need_vertical_takeoff() &&
 				    _work_item_type == WORK_ITEM_TYPE_DEFAULT &&
 				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
+printf("L670\n");
 
 					new_work_item_type = WORK_ITEM_TYPE_TAKEOFF;
 
@@ -688,6 +699,7 @@ Mission::set_mission_items()
 					   && _work_item_type == WORK_ITEM_TYPE_DEFAULT
 					   && new_work_item_type == WORK_ITEM_TYPE_DEFAULT
 					   && _navigator->get_vstatus()->is_rotary_wing) {
+printf("L698\n");
 
 					/* if there is no need to do a takeoff but we have a takeoff item, treat is as waypoint */
 					_mission_item.nav_cmd = NAV_CMD_WAYPOINT;
@@ -702,6 +714,7 @@ Mission::set_mission_items()
 				} else if (_mission_item.nav_cmd == NAV_CMD_VTOL_TAKEOFF
 					   && _work_item_type == WORK_ITEM_TYPE_DEFAULT
 					   && new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
+printf("L713\n");
 
 					if (_navigator->get_vstatus()->is_rotary_wing) {
 						/* haven't transitioned yet, trigger vtol takeoff logic below */
@@ -720,6 +733,7 @@ Mission::set_mission_items()
 				if (_mission_item.nav_cmd == NAV_CMD_TAKEOFF &&
 				    _work_item_type == WORK_ITEM_TYPE_TAKEOFF &&
 				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
+printf("L732\n");
 
 					_mission_item.nav_cmd = NAV_CMD_WAYPOINT;
 					/* ignore yaw here, otherwise it might yaw before heading_sp_update takes over */
@@ -736,6 +750,7 @@ Mission::set_mission_items()
 				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT &&
 				    _navigator->get_vstatus()->is_rotary_wing &&
 				    !_navigator->get_land_detected()->landed) {
+printf("L749\n");
 
 					/* check if the vtol_takeoff waypoint is on top of us */
 					if (do_need_move_to_takeoff()) {
@@ -753,7 +768,7 @@ Mission::set_mission_items()
 				if (_mission_item.nav_cmd == NAV_CMD_VTOL_TAKEOFF
 				    && _work_item_type == WORK_ITEM_TYPE_TRANSITON_AFTER_TAKEOFF
 				    && new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
-
+printf("l767\n");
 					new_work_item_type = WORK_ITEM_TYPE_DEFAULT;
 					_mission_item.nav_cmd = NAV_CMD_WAYPOINT;
 					_mission_item.autocontinue = true;
@@ -765,7 +780,7 @@ Mission::set_mission_items()
 				    && _work_item_type == WORK_ITEM_TYPE_DEFAULT
 				    && new_work_item_type == WORK_ITEM_TYPE_DEFAULT
 				    && !_navigator->get_land_detected()->landed) {
-
+printf("L779\n");
 					new_work_item_type = WORK_ITEM_TYPE_MOVE_TO_LAND;
 
 					/* use current mission item as next position item */
@@ -792,7 +807,7 @@ Mission::set_mission_items()
 				    && new_work_item_type == WORK_ITEM_TYPE_DEFAULT
 				    && !_navigator->get_vstatus()->is_rotary_wing
 				    && !_navigator->get_land_detected()->landed) {
-
+printf("L806\n");
 					set_vtol_transition_item(&_mission_item, vtol_vehicle_status_s::VEHICLE_VTOL_STATE_MC);
 
 					new_work_item_type = WORK_ITEM_TYPE_MOVE_TO_LAND_AFTER_TRANSITION;
@@ -803,7 +818,7 @@ Mission::set_mission_items()
 				    (_work_item_type == WORK_ITEM_TYPE_DEFAULT ||
 				     _work_item_type == WORK_ITEM_TYPE_MOVE_TO_LAND_AFTER_TRANSITION) &&
 				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
-
+printf("L817\n");
 					new_work_item_type = WORK_ITEM_TYPE_MOVE_TO_LAND;
 
 					/* use current mission item as next position item */
@@ -831,6 +846,7 @@ Mission::set_mission_items()
 					_mission_item.time_inside = 0.0f;
 
 				} else if (_mission_item.nav_cmd == NAV_CMD_LAND && _work_item_type == WORK_ITEM_TYPE_DEFAULT) {
+printf("L845\n");
 					if (_mission_item.land_precision > 0 && _mission_item.land_precision < 3) {
 						new_work_item_type = WORK_ITEM_TYPE_PRECISION_LAND;
 
@@ -849,7 +865,7 @@ Mission::set_mission_items()
 				/* we just moved to the landing waypoint, now descend */
 				if (_work_item_type == WORK_ITEM_TYPE_MOVE_TO_LAND &&
 				    new_work_item_type == WORK_ITEM_TYPE_DEFAULT) {
-
+printf("L864\n");
 					if (_mission_item.land_precision > 0 && _mission_item.land_precision < 3) {
 						new_work_item_type = WORK_ITEM_TYPE_PRECISION_LAND;
 
@@ -870,6 +886,7 @@ Mission::set_mission_items()
 				/* XXX: if specified heading for landing is desired we could add another step before the descent
 				 * that aligns the vehicle first */
 				if (_mission_item.nav_cmd == NAV_CMD_LAND || _mission_item.nav_cmd == NAV_CMD_VTOL_LAND) {
+printf("L885\n");
 					_mission_item.yaw = NAN;
 				}
 
@@ -879,6 +896,7 @@ Mission::set_mission_items()
 				if (_mission_execution_mode == mission_result_s::MISSION_EXECUTION_MODE_FAST_FORWARD &&
 				    ((_mission_item.nav_cmd == NAV_CMD_LOITER_UNLIMITED) ||
 				     (_mission_item.nav_cmd == NAV_CMD_LOITER_TIME_LIMIT))) {
+printf("L895\n");
 					_mission_item.nav_cmd = NAV_CMD_WAYPOINT;
 					_mission_item.autocontinue = true;
 					_mission_item.time_inside = 0.0f;
@@ -888,6 +906,7 @@ Mission::set_mission_items()
 			}
 
 		case mission_result_s::MISSION_EXECUTION_MODE_REVERSE: {
+printf("L907\n");
 				if (item_contains_position(_mission_item)) {
 					// convert mission item to a simple waypoint
 					_mission_item.nav_cmd = NAV_CMD_WAYPOINT;
@@ -979,11 +998,12 @@ Mission::set_mission_items()
 	}
 
 	/*********************************** set setpoints and check next *********************************************/
-
+printf("L999\n");
 	position_setpoint_triplet_s *pos_sp_triplet = _navigator->get_position_setpoint_triplet();
 
 	/* set current position setpoint from mission item (is protected against non-position items) */
 	if (new_work_item_type != WORK_ITEM_TYPE_PRECISION_LAND) {
+printf("L1004\n");
 		mission_apply_limitation(_mission_item);
 		mission_item_to_position_setpoint(_mission_item, &pos_sp_triplet->current);
 	}
@@ -991,6 +1011,7 @@ Mission::set_mission_items()
 	/* only set the previous position item if the current one really changed */
 	if ((_work_item_type != WORK_ITEM_TYPE_MOVE_TO_LAND) &&
 	    !position_setpoint_equal(&pos_sp_triplet->current, &current_setpoint_copy)) {
+printf("L1012\n");
 		pos_sp_triplet->previous = current_setpoint_copy;
 	}
 
@@ -1003,7 +1024,7 @@ Mission::set_mission_items()
 	/* require takeoff after landing or idle */
 	if (pos_sp_triplet->current.type == position_setpoint_s::SETPOINT_TYPE_LAND
 	    || pos_sp_triplet->current.type == position_setpoint_s::SETPOINT_TYPE_IDLE) {
-
+printf("L1025\n");
 		_need_takeoff = true;
 	}
 
@@ -1011,10 +1032,15 @@ Mission::set_mission_items()
 	reset_mission_item_reached();
 
 	if (_mission_type == MISSION_TYPE_OFFBOARD) {
+printf("L1033\n");
 		set_current_offboard_mission_item();
 	}
 
+	printf("_mission_item.autocontinue: %d\n", _mission_item.autocontinue);
+	printf("get_time_inside() :%f\n", static_cast<double>(get_time_inside(_mission_item)));
+	printf("FLT_EPslion %f\n", static_cast<double>(FLT_EPSILON));
 	if (_mission_item.autocontinue && get_time_inside(_mission_item) < FLT_EPSILON) {
+printf("L1038\n");
 		/* try to process next mission item */
 		if (has_next_position_item) {
 			/* got next mission item, update setpoint triplet */
@@ -1027,19 +1053,21 @@ Mission::set_mission_items()
 		}
 
 	} else {
+printf("L1051\n");
 		/* vehicle will be paused on current waypoint, don't set next item */
 		pos_sp_triplet->next.valid = false;
 	}
 
 	/* Save the distance between the current sp and the previous one */
 	if (pos_sp_triplet->current.valid && pos_sp_triplet->previous.valid) {
-
+printf("L1058\n");
 		_distance_current_previous = get_distance_to_next_waypoint(
 						     pos_sp_triplet->current.lat, pos_sp_triplet->current.lon,
 						     pos_sp_triplet->previous.lat, pos_sp_triplet->previous.lon);
 	}
 
 	_navigator->set_position_setpoint_triplet_updated();
+printf("L1065\n");
 }
 
 bool

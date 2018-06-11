@@ -317,7 +317,6 @@ MissionBlock::is_mission_item_reached()
 	/* Check if the waypoint and the requested yaw setpoint. */
 
 	if (_waypoint_position_reached && !_waypoint_yaw_reached) {
-
 		if ((_navigator->get_vstatus()->is_rotary_wing
 		     || (_mission_item.nav_cmd == NAV_CMD_LOITER_TO_ALT && _mission_item.force_heading))
 		    && PX4_ISFINITE(_mission_item.yaw)) {
@@ -386,7 +385,6 @@ MissionBlock::is_mission_item_reached()
 								   bearing, curr_sp.loiter_radius,
 								   &curr_sp.lat, &curr_sp.lon);
 			}
-
 			return true;
 		}
 	}

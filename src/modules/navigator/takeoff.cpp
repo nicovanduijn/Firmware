@@ -62,6 +62,7 @@ Takeoff::on_active()
 		set_takeoff_position();
 
 	} else if (is_mission_item_reached() && !_navigator->get_mission_result()->finished) {
+		printf("inside takeoff.cpp#64\n");
 		_navigator->get_mission_result()->finished = true;
 		_navigator->set_mission_result_updated();
 

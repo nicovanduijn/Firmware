@@ -1755,6 +1755,7 @@ void MulticopterPositionControl::control_auto()
 		//only project setpoints if they are finite, else use current position
 		if (PX4_ISFINITE(_pos_sp_triplet.current.lat) &&
 		    PX4_ISFINITE(_pos_sp_triplet.current.lon)) {
+			//printf("_pos_sp_triplet.current.lat: %f, lon: %f\n", _pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon);
 			/* project setpoint to local frame */
 			map_projection_project(&_ref_pos,
 					       _pos_sp_triplet.current.lat, _pos_sp_triplet.current.lon,
@@ -3294,6 +3295,7 @@ MulticopterPositionControl::task_main()
 								  NAN), _yaw, NAN);
 
 				if (_pos_sp_triplet.current.valid) {
+				//	printf("_curr_pos_sp: %f, %f, %f\n", static_cast<double>(_curr_pos_sp(0)), static_cast<double>(_curr_pos_sp(1)), static_cast<double>(_curr_pos_sp(2)));
 					update_avoidance_waypoint_desired(trajectory_waypoint_s::POINT_1, _curr_pos_sp, matrix::Vector3f(NAN, NAN, NAN),
 									  matrix::Vector3f(NAN, NAN, NAN), _pos_sp_triplet.current.yaw, NAN);
 				}
